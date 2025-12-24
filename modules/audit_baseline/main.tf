@@ -374,15 +374,21 @@ resource "aws_config_config_rule" "managed" {
 locals {
   cw_alarm_patterns = {
     unauthorized_api_calls = {
-      pattern     = "{ ($.errorCode = "*UnauthorizedOperation") || ($.errorCode = "AccessDenied*") }"
+      pattern = <<-PATTERN
+{ ($.errorCode = "*UnauthorizedOperation") || ($.errorCode = "AccessDenied*") }
+PATTERN
       metric_name = "${var.name_prefix}-UnauthorizedAPICalls"
     }
+
     console_signin_without_mfa = {
-      pattern     = "{ ($.eventName = "ConsoleLogin") && ($.additionalEventData.MFAUsed != "Yes") && ($.userIdentity.type != "AssumedRole") }"
+      pattern = <<-PATTERN
+{ ($.eventName = "ConsoleLogin") && ($.additionalEventData.MFAUsed != "Yes") && ($.userIdentity.type != "AssumedRole") }
+PATTERN
       metric_name = "${var.name_prefix}-ConsoleNoMFA"
     }
   }
 }
+
 
 resource "aws_cloudwatch_log_metric_filter" "trail" {
   for_each = (var.enable_cloudtrail && var.cloudtrail_enable_cw_logs) ? local.cw_alarm_patterns : {}
